@@ -1,14 +1,20 @@
-FROM openjdk:17-jdk-alpine
+export default {
+  async fetch(request, env, ctx) {
+    // 替换成你的SnapDeploy官方域名
+    const target = "https://halo.containers.snapdeploy.app";
+    const url = new URL(request.url);
+    const targetUrl = new URL(target + url.pathname + url.search);
 
-WORKDIR /app
+    const headers = new Headers(request.headers);
+    headers.set("Host", new URL(target).host);
+    headers.set("X-Forwarded-Proto", "https");
 
-RUN apk add --no-cache wget
-RUN wget -O halo.jar https://dl.halo.run/release/halo-2.20.0.jar
-
-EXPOSE 8090
-
-ENTRYPOINT ["java", "-Xms128m", "-Xmx256m", "-jar", "halo.jar", \
-"--server.port=8090", \
-"--halo.external-url=https://www.langzi91.us.ci", \
-"--server.forward-headers-strategy=native", \
-"--spring.profiles.active=prod"]
+    const res = await fetch(targetUrl, {
+      method: request.method,
+      headers: headers,
+      body: request.body,
+      redirect: "follow"
+    });
+    return res;
+  }
+};
