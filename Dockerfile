@@ -1,20 +1,18 @@
-export default {
-  async fetch(request, env, ctx) {
-    // 替换成你的SnapDeploy官方域名
-    const target = "https://halo.containers.snapdeploy.app";
-    const url = new URL(request.url);
-    const targetUrl = new URL(target + url.pathname + url.search);
+# 基础JDK镜像（Halo推荐）
+FROM openjdk:17-jdk-slim
 
-    const headers = new Headers(request.headers);
-    headers.set("Host", new URL(target).host);
-    headers.set("X-Forwarded-Proto", "https");
+# 设置环境变量（解决监听0.0.0.0、端口8090）
+ENV HALO_SERVER_ADDRESS=0.0.0.0
+ENV HALO_SERVER_PORT=8090
+ENV TZ=Asia/Shanghai
 
-    const res = await fetch(targetUrl, {
-      method: request.method,
-      headers: headers,
-      body: request.body,
-      redirect: "follow"
-    });
-    return res;
-  }
-};
+WORKDIR /app
+
+# 复制jar包，注意：如果你的jar名字不一样，自行修改
+COPY target/halo.jar app.jar
+
+# 暴露端口（仅文档标注，平台实际端口看面板）
+EXPOSE 8090
+
+# 启动命令
+ENTRYPOINT ["java","-jar","app.jar"]
